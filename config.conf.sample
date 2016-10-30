@@ -1,0 +1,92 @@
+#!/bin/bash
+#
+# EXECUTIONS ET MODULES
+
+	MOD_SKIP=false  # valeurs par defaut
+	RUN_SERVICES=true
+	RUN_CHECKDISK=true
+	RUN_FTPSYNC=true
+	RUN_LOSSLESS=true
+	RUN_CUESPLIT=true
+	RUN_CLEANUP=true
+
+	AUTO_RUN=false # aucune interaction nécessaire, auto-restart automatique
+	MANUAL_RUN=false # confirmer l'execution de chaque module
+	SAND_BOX=false # mode test, n'agit pas sur les fichiers (pas de suppression ou conversions)
+	DEMO_MODE=true # mode test, n'affiche pas les infos sensibles (serveur ftp, identifiants)
+
+	# options du mode automatique
+	AUTO_RESTART=2 # attente avant ré-execution auto (en heures)
+	RUN_NOTIF=true # envoie une notification lors de l'execution du script
+
+
+
+# PLUGINS OPTIONNEL
+
+	# services de notifications
+	NOTIF_PUSH=true
+	PUSH_DEST="all" # device ou contact ("all" pour tous)
+	PUSH_APIKEY="o.nvoChD93vdh2Fm4Aqpbu71V3z2Ab2bq4"  # access token @ https://www.pushbullet.com/#settings
+ 
+	NOTIF_MAIL=false
+	MAIL_DEST="user@mail.com"
+
+# VERIFICATION PROCESSUS (services)
+
+	SERVICES="ssh vino apache2 mysql plexmediaserver crashplan netdata transmission-daemon sickrage couchpotato headphones " # processus font vérifier le fonctionnement
+	RUN_MISSING=false # effectuer un service start des processus qui ne sont pas en fonctionnement
+
+# VERIFICATION DISQUES ET ESPACE LIBRE (checkdisk)
+
+	# paramétrage de la connexion FTP
+	LOCAL_DISKS="/dev/sda1 /dev/sda2" # paths/mounts séparé par des espaces
+	SPACE_ALERT="95%" # quota d'utilisation avant alerte espace libre avec unité %
+	SPACE_FORCE=false # continuer l'execution malgré alerte espace libre
+	BACKUP_DISK="BACKUPDRIVE" # nom de volume du disque de backup (son absence n'empeche pas l'execution du script mais provoque l'arrêt d'un processus)
+	BACKUP_PROC="crashplan" # processus à arreter (service <service> stop) si le disque de backup est absent
+	BACKUP_FORCE=true # continuer l'execution du script malgré l'absence du disque de backup
+
+# SYNCHRONISATION FTP (ftpsync)
+
+	# paramétrage de la connexion FTP
+	FTP_USER=user
+	FTP_PWD=password
+	FTP_HOST=ftp.host.com
+
+	# paramétrage des téléchargements (lftp)
+	DL_SEGMENT=3 # nombre de segments par fichier
+	DL_PARALLEL=1 # nombre de téléchargements parallèles
+	DL_SPEED=400 # limite pour tous les transferts en Ko
+
+	# dossiers/fichiers à exclure du téléchargement
+	MIRROR_OPTIONS="--Remove-source-files --only-missing --no-empty-dirs "
+	MIRROR_EXCLUDE="incomplete/ __*/" # dossiers incomplets et commençant par 2 underscores ignorés
+	MIRROR_ORDER="_series/* _music/* _films/* *" # fichiers ou dossiers à transférer en priorité (exemple : *.nfo Dir1/ Dir2/ )
+
+	# paramétrage des path pour la synchro seedbox (sans / de fin)
+	FTP_REMOTE_DIR=/
+	FTP_LOCAL_DIR=/home/user/Downloads
+
+
+# CONVERSIONS AUDIO (lossless)
+
+	# paramétrage des path pour la conversion audio (sans / de fin)
+	LOSSLESS_SOURCE_DIR=/home/user/Downloads
+	LOSSLESS_DEST_DIR=/home/user/Downloads
+	CUE_SOURCE_DIR=/home/user/Downloads
+	CUE_DEST_DIR=/home/user/Downloads
+
+	# options pour la conversion audio
+	MP3_OVERWRITE=true  # écraser mp3 si existant 
+	WAV_OVERWRITE=true  # écraser wave si existant
+	LOSSLESS_DEL=true # effacer fichier lossless après conversion réussie
+	LENGTH_TOLER=2  # secondes de diff à partir de laquelle on considère le mp3 comme non conforme
+
+	CONV_NOTIF=10  # notification à partir de tant de conversions terminées
+
+# NETTOYAGE AUTOMATIQUE (cleanup)
+
+	CLEANUP_DIR=/home/user/Downloads
+	CLEANUP_EXT="pls m3u log url nfo gif bmp"  # types de fichier à supprimer (séparés par des espaces)
+	CLEANUP_NAME="thumbs.db desktop.ini .DS_Store" # trashfiles à supprimer
+
