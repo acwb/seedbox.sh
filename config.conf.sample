@@ -74,7 +74,7 @@
 	# paramétrage des path pour la conversion audio (sans / de fin)
 	LOSSLESS_SOURCE_DIR=/home/user/Downloads
 	LOSSLESS_DEST_DIR=/home/user/Downloads
-	CUE_SOURCE_DIR=/home/user/Downloads
+	CUE_SOURCE_DIR=/home/user/Downloads 
 	CUE_DEST_DIR=/home/user/Downloads
 
 	# options pour la conversion audio
