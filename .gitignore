@@ -1,3 +1,4 @@
 # Do not submit or pull configuration settings when interacting with GitHub.
-config.conf
+conf/config.conf
 logs/**
+conf/tograb/**

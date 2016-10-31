@@ -12,6 +12,8 @@ usage(){
     echo "    -p=[module], --bypass=[module]  ne pas executer tel script () "
     echo "                                    exemple -s=ftpsync pour passer directement au script suivant "
     echo "    -l=[speed], --limit=[speed]     régler une limitation de débit download en Ko/s pour la synchronisation ftp "
+    echo "    -r=[time], --restart=[time]     régler le temps d'attente en heures avant restart (mode auto only) "    
+    echo "	  -m, --mute 					  n'envoyer aucune notification"
     echo "    -a, --auto                      mode auto, aucune interaction de l'utilisateur nécessaire (pour auto-run) "
     echo "    -i, --interactive               mode manuel, demande plus de confirmations que par défaut "
     echo "    -t,, -s, --test, --sandbox      mode test, s'agit pas sur les fichiers (pas de conv ni suppression) "
@@ -26,24 +28,15 @@ usage(){
 ##  Charge le fichier configuration ou affiche un message d'erreur si fichier absent
 ##
 load_config() {
-	if [ ! -f "$scriptpath/config.conf" ]; then
+	if [ ! -f "$scriptpath/conf/config.conf" ]; then
 		echo -e "\n\e[91m✖\e[0m Erreur: éditer le fichier de configuration et le renommer en config.conf \n"
 		exit 0
 	else
-		source $scriptpath/config.conf
+		source $scriptpath/conf/config.conf
+		echo $CONFIG_LOADED
 	fi
 }
-
-
-###############################################################################
-##  FONCTION load_playlists()
-##
-##  Parse le fichier ytpl.conf
-##
-load_playlists() {
-	source "$scriptpath/inc/bash-ini-parser.fn"
-	cfg_parser "$scriptpath/ytpl.conf"
-}
+ 
 
 ###############################################################################
 ##  FONCTION process_params()
@@ -63,7 +56,7 @@ process_params() {
 		elif [ "$MOD_SKIP" = "grabber" ] ; then RUN_SERVICES=false ; RUN_CHECKDISK=false ; RUN_FTPSYNC=false ; RUN_LOSSLESS=false ; RUN_CUESPLIT=false ; RUN_GRABBER=false
 		elif [ "$MOD_SKIP" = "cleanup" ] ; then RUN_SERVICES=false ; RUN_CHECKDISK=false ; RUN_FTPSYNC=false ; RUN_LOSSLESS=false ; RUN_CUESPLIT=false ; RUN_GRABBER=false ; RUN_CLEANUP=false	; fi
 	fi
-	
+	set_speedlimit
 }
 
 
@@ -75,6 +68,16 @@ process_params() {
 ##
 check_params() { # lance quelques vérifications des paramètres de lancement et interrompt l'execution du script en cas de problème
 
+	# création des dossiers logs/ et conf/tograb/ si absents (première execution)
+	if [ ! -d "$scriptpath/logs" ]; then mkdir -m 777 $scriptpath/logs ; fi
+	if [ ! -d "$scriptpath/conf/tograb" ]; then mkdir -m 777 $scriptpath/conf/tograb ;   fi
+
+	# création des fichiers todl-lists si absents
+	if [ ! -f "$scriptpath/conf/tograb/todl.conf" ]; then cat /dev/null > $scriptpath/conf/tograb/todl.conf ; fi
+	if [ ! -f "$scriptpath/conf/tograb/pls.conf" ]; then cat /dev/null > $scriptpath/conf/tograb/pls.conf ; fi
+	if [ ! -f "$scriptpath/conf/tograb/mypls.conf" ]; then cat /dev/null > $scriptpath/conf/tograb/mypls.conf ; fi
+	if [ ! -f "$scriptpath/conf/tograb/rss.conf" ]; then cat /dev/null > $scriptpath/conf/tograb/rss.conf ; fi
+
 	# si aucun paramètre n'a été ajouté à la ligne de commande
 	if [ "$defaultconfig" = true ] ; then
 		echo -ne "\n\e[34m➤\e[0m Lancement du script avec paramètres par défaut"
@@ -83,7 +86,7 @@ check_params() { # lance quelques vérifications des paramètres de lancement et
 			read -n1 -r -p ". Vérifier la configuration actuelle ? (o/N) " key
 		    if [[ $key =~ ^([oO])$ ]] ; then
 		      echo -e "\n" 
-		      echo "$( cat $scriptpath/config.conf )"
+		      echo "$( cat $scriptpath/conf/config.conf )"
 		      echo ""
 		      read -n1 -r -p "Poursuivre l'execution ? (O/n) " key
 			    if [[ $key =~ ^([nN])$ ]] ; then
@@ -108,7 +111,9 @@ check_params() { # lance quelques vérifications des paramètres de lancement et
 	echo -e "\e[34m➤\e[0m Vérification des paramètres..\n"
 	validparams=1 # les paramètres et options sont valides, sauf :
 	if [ ! -f "$scriptpath/inc/functions.fn" ]; then echo -e "   \e[91m✖\e[0m Fichier include des fonctions non trouvé" ; validparams=0 ; fi
-	if [ ! -f "$scriptpath/config.conf" ]; then echo -e "   \e[91m✖\e[0m Fichier de configuration non trouvé" ; validparams=0 ; fi
+	if [ ! -f "$scriptpath/conf/config.conf" ]; then echo -e "   \e[91m✖\e[0m Fichier de configuration non trouvé" ; validparams=0 ; fi
+	if [ ! -w "$scriptpath/conf/tograb" ] ; then echo -e "   \e[91m✖\e[0m Le dossier $scriptpath/conf/tograb n'est pas accessible en écriture"; validparams=0 ; fi
+	if [ ! -w "$scriptpath/logs" ] ; then echo -e "   \e[91m✖\e[0m Le dossier $scriptpath/logs n'est pas accessible en écriture"; validparams=0 ; fi
 	if [ -z "$FTP_USER" ] || [ -z "$FTP_PWD" ] || [ -z "$FTP_HOST" ]; then echo -e "   \e[91m✖\e[0m Identifiants et serveur FTP non paramétrés" ; validparams=0 ; fi
 	if [ -z "$FTP_REMOTE_DIR" ]; then echo -e "   \e[91m✖\e[0m Emplacement distant du FTP non paramétré" ; validparams=0 ; fi
 	if [ ! -d "$FTP_LOCAL_DIR" ]; then echo -e "   \e[91m✖\e[0m Emplacement local pour synchro FTP inexistant : $FTP_LOCAL_DIR" ; validparams=0 ; fi
@@ -130,10 +135,6 @@ check_params() { # lance quelques vérifications des paramètres de lancement et
 
 	if [ "$validparams" = 0 ] ; then echo ""   ; exit 0 # en cas d'erreur on stop l'execution du script
 	else echo -e "   \e[32m✓\e[0m Aucun problème de configuration détecté" ; fi 
-
-
-
-		
 }	
 
 
@@ -307,20 +308,22 @@ exit_module() {
 ##  Envoi une notification à l'utilisateur selon les services activés dans la config
 ##
 send_notif() {
-	if [ "$1" != "" ] && [ "$2" != "" ]; then 
-		title="$1"
-		content="$2"
-		if [ "$NOTIF_PUSH" = true ] ; then 
-			#echo "Notification via Pushbullet.."
-			bash $scriptpath/inc/pushbullet.sh push $PUSH_DEST note "$title" "$content"
-		fi
-		if [ "$NOTIF_MAIL" = true ] ; then 
-			echo $content | mail -s "$title" -aFrom:Seedbox.sh "$MAIL_DEST" 
-		fi
-	else
-		echo "Erreur: paramètres manquants : send_notif($title,$content)"
-	fi
+	if [ "$MUTE_NOTIF" != true ] ; then
 
+		if [ "$1" != "" ] && [ "$2" != "" ]; then 
+			title="$1"
+			content="$2"
+			if [ "$NOTIF_PUSH" = true ] ; then 
+				#echo "Notification via Pushbullet.."
+				bash $scriptpath/inc/pushbullet.sh push $PUSH_DEST note "$title" "$content"
+			fi
+			if [ "$NOTIF_MAIL" = true ] ; then 
+				echo $content | mail -s "$title" -aFrom:Seedbox.sh "$MAIL_DEST" 
+			fi
+		else
+			echo "Erreur: paramètres manquants : send_notif($title,$content)"
+		fi
+	fi
 }
 
 
@@ -345,6 +348,39 @@ restart_loop() {
 	fi
 }
 
+
+###############################################################################
+##  FONCTION restart_loop()
+##
+##  Appelée après le téléchargement de chaque liste de fichiers, renommage
+##  des fichiers pour compatibilité Plex (fichier .summary + format date)
+##
+video_rename() {
+	if [ "$STREAM_FILENAME_RENAME" = true ]; then
+		#echo -ne "\n     \e[34m➤\e[0m Renommage des fichiers pour compatibilité Plex \n"
+		find $STREAM_DIR -name "*.description" -exec rename 's/\.description$/.summary/' '{}' \; &> /dev/null
+		find $STREAM_DIR -exec rename -v 's/(\d{4})(\d{2})(\d{2})/$1-$2-$3/'  '{}' \; &> /dev/null
+	fi
+}
+
+###############################################################################
+##  FONCTION restart_loop()
+##
+##  Appelée après les exécutions de tous les modules, relance automatiquement
+##	le script si le mode automatique est actif.
+##
+set_speedlimit() {
+	if [ "$DL_SPEED_FORCE" != true ]; then
+		H=$(date +%H)
+		if (( 4 <= 10#$H && 10#$H < 9 )); then 
+		    DL_SPEED=$DL_MAX_SPEED
+		elif (( 9 <= 10#$H )); then 
+		    DL_SPEED=$DL_MIN_SPEED
+		else
+		    DL_SPEED=$DL_MIN_SPEED
+		fi
+	fi
+}
 
 ###############################################################################
 ##  FONCTION format_pourcent()

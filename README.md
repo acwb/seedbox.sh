@@ -43,8 +43,7 @@
 
 ### [6] GRABBER.sh >> Synchronisation de playlists YouTube
 
-	Recherche et télécharge les nouvelles vidéos uploadées dans les playlists
-	paramétrées dans la configuration.
+	Recherche et télécharge les nouvelles vidéos contenues dans plusieurs fichiers "todl"
 	Méthode utilisée : youtube-dl
 	Options par défaut: 
 				- renomme les fichiers pour compatibilité avec Plex
@@ -66,6 +65,8 @@ la configuration par défaut (config.conf) est alors utilisée.
 	-p=[module], --bypass=[module]  ne pas executer tel script ()
 	                                exemple -s=seedbox pour passer directement au script suivant
 	-l=[speed], --limit=[speed]     régler une limitation de débit download en Ko/s
+	-r=[time], --restart=[time]     régler le temps d'attente en heures avant restart (mode auto only)
+	-m, --mute                      n'envoyer aucune notification
 	-a, --auto                      mode auto, aucune interaction de l'utilisateur nécessaire
 	-i, --interactive               mode manuel, demande plus de confirmations que par défaut
 	-t,, -s, --test, --sandbox      mode test, s'agit pas sur les fichiers (pas de conv ni suppression)

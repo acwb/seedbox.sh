@@ -81,6 +81,8 @@ bash $scriptpath/dos2unix.sh 2>/dev/null # A VIRER
 #%    -p=[module], --bypass=[module]  ne pas executer tel script ()
 #%                                    exemple -s=ftpsync pour passer directement au script suivant
 #%    -l=[speed], --limit=[speed]     régler une limitation de débit download en Ko/s
+#%    -r=[time], --restart=[time]     régler le temps d'attente en heures avant restart (mode auto only)
+#%    -m, --mute                      n'envoyer aucune notification
 #%    -a, --auto                      mode auto, aucune interaction de l'utilisateur nécessaire
 #%    -i, --interactive               mode manuel, demande plus de confirmations que par défaut
 #%    -t,, -s, --test, --sandbox      mode test, s'agit pas sur les fichiers (pas de conv ni suppression)
@@ -112,11 +114,11 @@ scriptpath="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 currentscript="start"
 log_file=$scriptpath/logs/$currentscript.log
 
-trap_on start # fonction d'interruption du script (CTRL+C)
-
 # include des fonctions et config
 source "$scriptpath/inc/functions.fn"
 load_config 
+
+trap_on start # fonction d'interruption du script (CTRL+C)
 
 # détermine si des options ont été spécifiées
 if [ $# -eq 0 ]; then defaultconfig=true
@@ -132,12 +134,18 @@ while [[ $# -gt 0 ]] ; do
            MOD_SKIP="$1"; shift;;
         "--bypass="*|"-p="* )   
            MOD_SKIP="${opt#*=}";;
-        "--limit" )
-           DL_SPEED="$1"; shift;;
-        "--limit="* )     
-           DL_SPEED="${opt#*=}";;
+        "--restart"|"-r" )
+           AUTO_RESTART="$1"; shift;;
+        "--restart="*|"-r="* )   
+           AUTO_RESTART="${opt#*=}";;
+        "--limit"|"-l" )
+           DL_SPEED="$1"; DL_SPEED_FORCE=true; shift;;
+        "--limit="*|"-l="* )    
+           DL_SPEED="${opt#*=}" ; DL_SPEED_FORCE=true;;
         "--auto"|"-a" )
            AUTO_RUN=true;;
+        "--mute"|"-m" )
+           MUTE_NOTIF=true;;
         "--interactive"|"-i" )
            MANUAL_RUN=true;;
         "--sandbox"|"--test"|"-s"|"-t" )

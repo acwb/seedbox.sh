@@ -92,27 +92,36 @@
 	STREAM_FILENAME_RENAME=true  # renomme les fichiers vidéos pour compatibilité Plex
 	
 	STREAM_OVERWRITE=false  # log les vidéos pour ne pas les télécharger plus d'une fois
-	STREAM_MAXDL=10 # nombre max de vidéos à télécharger par playlist et par exécution
-	STREAM_AFTERDATE=20151231 # ne télécharger que les vidéos postérieures à une date au format YYYYMMDD (20151230)
+	STREAM_MAXDL=2 # nombre max de vidéos à télécharger par playlist et par exécution
+	STREAM_AFTERDATE=20071231 # ne télécharger que les vidéos postérieures à une date au format YYYYMMDD (20151230)
 	STREAM_SUB_LANG="fr,en"  # langues des sous-titres à télécharger séparées par des virgules (fr, en, etc)
+
+	# télécharge les videos dont les urls sont contenues dans un fichier todl.txt
+	STREAM_TODL_SUBPATH="_TRANSIT/_WEBGRAB/%(extractor)s" 
+	STREAM_TODL_FNAME="%(title)s.%(id)s.%(ext)s" # format du nom de fichier téléchargé
+	STREAM_TODL=/home/toto/scripts/seedbox/conf/tograb/todl.conf # fichier contenant les URL à télécharger
+
+	# URL des flux RSS à télécharger
+	STREAM_RSS_SUBPATH="_TRANSIT/_RSS/%(extractor)s" 
+	STREAM_RSS_FNAME="%(title)s.%(id)s.%(ext)s" # format du nom de fichier téléchargé
+	STREAM_RSS=/home/toto/scripts/seedbox/conf/tograb/rss.conf # fichier contenant les URL à télécharger
 
 	# URL des playlists YouTube à synchroniser (playlist avec plusieurs uploader => path par playlist)
 	STREAM_MYPLS_SUBPATH="_TRANSIT/%(playlist)s" 
-	STREAM_MYPLS_FNAME="%(title)s - %(uploader)s.%(ext)s" # format du nom de fichier téléchargé
-	STREAM_MYPLS=() # déclaration de l'array, à laisser
-	STREAM_PLS+=('https://www.youtube.com/playlist?list=PLg8iZOtXwJOpSqQq-VsOah9mg2TVqz9qY') # One Shot Not
+	STREAM_MYPLS_FNAME="%(title)s - %(uploader)s.%(id)s.%(ext)s" # format du nom de fichier téléchargé
+	STREAM_MYPLS=/home/toto/scripts/seedbox/conf/tograb/mypls.conf # fichier contenant les URL à télécharger
 	
 	# URL des playlists YouTube à synchroniser une par ligne sous la forme STREAM_PLS+=('http://') 
 	STREAM_PLS_SUBPATH="%(uploader)s/%(playlist)s"
-	STREAM_PLS_FNAME="%(playlist)s - %(upload_date)s - %(title)s.%(ext)s" # format du nom de fichier téléchargé
-	STREAM_PLS=() # déclaration de l'array, à laisser
-	STREAM_PLS+=('https://www.youtube.com/playlist?list=PLCwXWOyIR22vgqVihCEu9WzWWWea6l-Bs') # Arte+7 sélection de la semaine
-	STREAM_PLS+=('https://www.youtube.com/playlist?list=PLKipY1cRnemLrpbVeW8AoilUtbGOLKwSf') # Datagueule
+	STREAM_PLS_FNAME="%(playlist)s - %(upload_date)s - %(title)s.%(id)s.%(ext)s" # format du nom de fichier téléchargé
+	STREAM_PLS=/home/toto/scripts/seedbox/conf/tograb/pls.conf # fichier contenant les URL à télécharger
  
+# NETTOYAGE AUTOMATIQUE (cleanup)
 
- # NETTOYAGE AUTOMATIQUE (cleanup)
-
-	CLEANUP_DIR=/home/user/Downloads
+	CLEANUP_DIR=/home/user/Downloads/ # répertoire à nettoyer
 	CLEANUP_EXT="pls m3u log url nfo gif bmp part"  # types de fichier à supprimer (séparés par des espaces)
 	CLEANUP_NAME="thumbs.db desktop.ini .DS_Store" # trashfiles à supprimer
 
+##################################################
+
+CONFIG_LOADED="Configuration chargée"

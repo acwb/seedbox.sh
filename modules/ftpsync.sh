@@ -1,8 +1,5 @@
 #!/bin/bash
 
-
- 
-
 # préparation de vars
 START_TIME=$SECONDS # initialisation du chronométrage des conversions
 currentscript="seedbox"
@@ -55,15 +52,15 @@ if [ $countdocus -ge 1 ]; then  echo -ne "\e[0m$countdocus\e[2m docs " ; fi
 if [ $countpodcasts -ge 1 ]; then  echo -en "\e[0m$countpodcasts\e[2m podcasts " ; fi
 if [ $countress -ge 1 ]; then  echo -ne "\e[0m$countress\e[2m ressources " ; fi
 if [ $countebooks -ge 1 ]; then  echo -ne "\e[0m$countebooks\e[2m ebooks " ; fi  
- echo -e "\e[0m"
+ 
 
 if [ $countfiles = 0 ]; then
   echo -ne "     \e[2m" ;  echo_log 1 "Aucun torrent disponible"
-  echo -e "\e[0m"
+  echo -e "\e[0m\n"
 
 else
 
-
+  echo -e "\e[0m\n"
   echo -ne "   \e[34m➤\e[0m Lancement de la synchronisation des $countfiles torrents \n \n"  
   sleep 1
 
